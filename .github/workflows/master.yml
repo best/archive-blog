@@ -1,0 +1,48 @@
+name: Master
+
+on:
+  push:
+    branches:
+    - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Login In Docker Cloud
+      run: |
+        echo "${{ secrets.DOCKER_PASSWORD }}" | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+    - name: Build The Application Latest Image
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/blog .
+
+    - name: Deploy The Image To Docker Cloud
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/blog:latest
+
+  deploy:
+    needs: [build]
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Prepare Environment
+      run: |
+        sudo apt-get install sshpass
+    
+    - name: Deploy To Server In US
+      run: |
+        sshpass -p ${{ secrets.ENTRY_US_PASSWORD }} ssh -p ${{ secrets.ENTRY_US_PORT }} -o stricthostkeychecking=no ${{ secrets.ENTRY_US_USERNAME }}@${{ secrets.ENTRY_US_HOST }} "mkdir -p /deploy/blog"
+        sshpass -p ${{ secrets.ENTRY_US_PASSWORD }} scp -P ${{ secrets.ENTRY_US_PORT }} deploy.sh ${{ secrets.ENTRY_US_USERNAME }}@${{ secrets.ENTRY_US_HOST }}:/deploy/blog
+        sshpass -p ${{ secrets.ENTRY_US_PASSWORD }} ssh -p ${{ secrets.ENTRY_US_PORT }} -o stricthostkeychecking=no ${{ secrets.ENTRY_US_USERNAME }}@${{ secrets.ENTRY_US_HOST }} "bash /deploy/blog/deploy.sh ${{ secrets.DOCKER_USERNAME }}"
+
+    - name: Deploy To Server In CN
+      run: |
+        sshpass -p ${{ secrets.ENTRY_CN_PASSWORD }} ssh -p ${{ secrets.ENTRY_CN_PORT }} -o stricthostkeychecking=no ${{ secrets.ENTRY_CN_USERNAME }}@${{ secrets.ENTRY_CN_HOST }} "mkdir -p /deploy/blog"
+        sshpass -p ${{ secrets.ENTRY_CN_PASSWORD }} scp -P ${{ secrets.ENTRY_CN_PORT }} deploy.sh ${{ secrets.ENTRY_CN_USERNAME }}@${{ secrets.ENTRY_CN_HOST }}:/deploy/blog
+        sshpass -p ${{ secrets.ENTRY_CN_PASSWORD }} ssh -p ${{ secrets.ENTRY_CN_PORT }} -o stricthostkeychecking=no ${{ secrets.ENTRY_CN_USERNAME }}@${{ secrets.ENTRY_CN_HOST }} "bash /deploy/blog/deploy.sh ${{ secrets.DOCKER_USERNAME }}"
