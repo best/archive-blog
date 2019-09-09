@@ -1,11 +1,11 @@
 ---
 title: 安装kubernetes之手动拉取初始化所需镜像
-date: 2018-12-07
-updated: 2018-12-07
+date: 2018-12-07 23:37:07
+updated: 2018-12-07 23:37:07
 tags:
 - kubernetes
 categories:
-- share
+- container
 ---
 安装kubernetes后进行初始化的过程中需要使用一些gcr.io上的镜像，然而在国内安装Kubernetes，因为k8s.gcr.io在谷歌的服务器上，会因为镜像拉取不成功导致kubernetes初始化失败，所以下面给出一个手动拉取kubernetes镜像的方式。
 
